@@ -1,5 +1,7 @@
 import pytest
+import subprocess
 from main import calculate_total_cost
+
 
 def test_calculate_total_cost():
     assert calculate_total_cost(100, 50, False) == 150
@@ -9,5 +11,9 @@ def test_calculate_total_cost():
     assert calculate_total_cost(150, 100, False) == 230  # $20 discount applied
     assert calculate_total_cost(200, 250, False) == 400  # $50 discount applied
 
+
 if __name__ == "__main__":
+    result = subprocess.run(['pytest', 'test_main.py', '--tb=short', '-v'], capture_output=True, text=True)
+    with open('test_results.txt', 'w') as f:
+        f.write(result.stdout)
     pytest.main()
