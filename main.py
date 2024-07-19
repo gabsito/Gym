@@ -48,8 +48,8 @@ def display_additional_features():
     print("Available Additional Features:")
     for feature, details in ADDITIONAL_FEATURES.items():
         print(
-            f"{feature}: {details['name']} " +
-            "- Cost: ${details['cost']} - Type: ${details['type']}")
+            feature+": "+details['name']
+            + "- Cost: $"+str(details['cost'])+" - Type: "+details['type'])
 
 
 def calculate_total_cost(
@@ -71,14 +71,17 @@ def apply_group_discount(total_cost, num_members):
 def get_membership_cost(membership_plan):
     if membership_plan in MEMBERSHIPS:
         return MEMBERSHIPS[membership_plan]['cost']
+    return 0
 
 
 def get_feature_cost(features):
     total_cost = 0
     for feature in features:
+        if feature == "":
+            return 0
         if feature not in ADDITIONAL_FEATURES:
             print(f"Error: {feature} is not a valid additional feature.")
-            total_cost = 0
+            total_cost = -1
             break
         else:
             total_cost += ADDITIONAL_FEATURES[feature]['cost']
@@ -87,6 +90,9 @@ def get_feature_cost(features):
 
 def main():
     error = True
+    premium_features = False
+    fifty_dsc = False
+    twenty_dsc = False
     while error:
         # Display membership options
         membership_plan = ""
@@ -102,18 +108,21 @@ def main():
 
         # Display additional features
         selected_features = []
-        features_cost = 0
-        while features_cost == 0:
+        features_cost = -1
+        while features_cost == -1:
             display_additional_features()
             selected_features = input(
                 "Select additional features (comma separated): ").split(',')
-
-            selected_features = [feature.strip() for feature in selected_features]
+            selected_features = [
+                feature.strip() for feature in selected_features]
 
             features_cost = get_feature_cost(selected_features)
 
-        # TODO: ARREGLAR PREMIUM FEATURES
-        premium_features = selected_features
+        if features_cost > 0:
+            premium_features = any(
+                ADDITIONAL_FEATURES[feature_id]['type'] == 'Premium'
+                for feature_id in selected_features)
+
         total_member_cost = calculate_total_cost(
             membership_cost,
             features_cost,
@@ -130,14 +139,28 @@ def main():
         total_cost = total_member_cost*num_members
         if total_cost > 400:
             total_cost -= 50  # Apply $50 discount
+            fifty_dsc = True
         elif total_cost > 200:
             total_cost -= 20  # Apply $20 discount
+            twenty_dsc = True
         # Confirm membership
-        print(f"Selected Membership: {membership_plan}")
-        print(f"Selected Features: {', '.join(selected_features)}")
+        selected_names = []
+        if features_cost > 0:
+            selected_names = [
+                ADDITIONAL_FEATURES[feature_id]['name']
+                for feature_id in selected_features]
+
+        membership_name = MEMBERSHIPS[membership_plan]['name']
+        print(f"Selected Membership: {membership_name}")
+        print(f"Selected Features: {', '.join(selected_names)}")
+        print("Applied Discounts: "
+              + ("+15% surchage premium feature, " if premium_features else "")
+              + ("-10% discount" if num_members >= 2 else "")
+              + ("-$50 discount, " if fifty_dsc else "")
+              + ("-$20 discount, " if twenty_dsc else ""))
         print(
             f"Total member Cost: ${total_member_cost:.2f}" +
-            ", Final Cost: ${total_cost:.2f}")
+            ", Final Cost: $"+str(total_cost))
 
         confirm = input("Confirm membership (yes/no): ").lower()
 
@@ -145,7 +168,7 @@ def main():
             print(f"Membership confirmed! Total cost: ${total_cost:.2f}")
             return int(total_cost)
         else:
-            print("Membership canceled.")
+            print("Membership canceled! -1")
             error = True
 
 
